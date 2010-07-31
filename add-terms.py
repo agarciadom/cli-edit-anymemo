@@ -109,7 +109,7 @@ def ask_for_category(db_cursor, completer, force, last_category):
     readline.parse_and_bind("tab: complete")
     readline.set_completer(completer)
     category = input("Category{}: "
-                     .format(" (default is )" + last_category
+                     .format(" (default is " + last_category + ")"
                              if last_category else "")).strip()
     readline.set_completer(None)
     if not category:
