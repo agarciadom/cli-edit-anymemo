@@ -1,6 +1,36 @@
 #!/usr/bin/python3.1
-"""Adds a set of questions and answers to an AnyMemo SQLite
-database. Entries are read from standard input."""
+"""Simple script for adding in bulk questions and answers to an
+AnyMemo SQLite database, with checks for repeated questions and
+answers and tab-completion for categories.
+
+Entries are read from standard input. Nothing is committed to disk
+until the end of the input is reached (when reading from a file) or
+until the user presses Ctrl+D (when running from a console). If the
+script is run from a console, Ctrl+C can be used to exit without
+saving any changes."""
+
+# Bulk add script for AnyMemo SQLite databases (tested with AnyMemo 5.3.2)
+# Copyright (c) 2010 Antonio García-Domínguez <nyoescape@gmail.com>
+# Available under the MIT license:
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 
 VERSION = "1.1"
 
