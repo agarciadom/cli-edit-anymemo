@@ -5,7 +5,7 @@ database. Entries are read from standard input."""
 VERSION = "1.1"
 
 # Default values
-DEFAULT_DATABASE = "germanpod.xml.db"
+DEFAULT_DATABASE = "mydatabase.xml.db"
 
 import sqlite3
 import logging
