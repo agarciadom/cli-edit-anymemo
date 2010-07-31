@@ -41,6 +41,7 @@ import sqlite3
 import logging
 import readline
 
+
 class CategoryCompleter(object):
     """Category completer."""
 
@@ -64,6 +65,7 @@ def confirm(question):
         return True
     else:
         return False
+
 
 def ask_for_question(db_cursor, force):
     question = input('Question: ').strip()
@@ -155,7 +157,8 @@ without saving changes. Autocomplete categories with TAB.
                 continue
             logging.debug("Got answer '{}'".format(answer))
 
-            category = ask_for_category(db_c, cat_completer.complete, force, last_category)
+            category = ask_for_category(db_c, cat_completer.complete,
+                                        force, last_category)
             if not category:
                 logging.debug("No category: looping back to start")
                 continue
@@ -164,10 +167,11 @@ without saving changes. Autocomplete categories with TAB.
                 logging.debug("Got category '{}'".format(category))
 
             db_c.execute(
-                'INSERT INTO dict_tbl (question, answer, category) VALUES (?,?,?)',
+                'INSERT INTO dict_tbl (question, answer, category) '
+                + 'VALUES (?, ?, ?)',
                 (question, answer, category))
             db_c.execute(
-                'INSERT INTO learn_tbl (date_learn, interval, grade, easiness, '
+                'INSERT INTO learn_tbl (date_learn, interval, grade, easiness,'
                 + 'acq_reps, ret_reps, lapses, acq_reps_since_lapse, '
                 + 'ret_reps_since_lapse) VALUES '
                 + '(?,?,?,?,?,?,?,?,?)',
