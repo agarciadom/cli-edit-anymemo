@@ -10,7 +10,6 @@ DEFAULT_DATABASE = "germanpod.xml.db"
 import sqlite3
 import logging
 import readline
-logging.basicConfig(level=logging.DEBUG)
 
 
 def confirm(question):
@@ -24,7 +23,7 @@ def confirm(question):
 def ask_for_question(db_cursor, force):
     question = input('Question: ').strip()
     db_cursor.execute(
-        'SELECT answer FROM dict_tbl WHERE trim(question)=? LIMIT 1',
+        'SELECT answer FROM dict_tbl WHERE trim(question)=?',
         (question,))
 
     rows = db_cursor.fetchall()
@@ -43,7 +42,7 @@ def ask_for_question(db_cursor, force):
 def ask_for_answer(db_cursor, force):
     answer = input('Answer: ').strip()
     db_cursor.execute(
-        'SELECT question FROM dict_tbl WHERE trim(answer)=? LIMIT 1',
+        'SELECT question FROM dict_tbl WHERE trim(answer)=?',
         (answer,))
 
     rows = db_cursor.fetchall()
@@ -153,10 +152,18 @@ if __name__ == "__main__":
         action="store_true", default=False,
         help="Add new entries without confirmation even if the questions "
              + "and/or answers exist")
+    parser.add_option(
+        "--verbose", "-v", dest="verbose",
+        action="store_true", default=False,
+        help="Print debugging information")
 
     opts, args = parser.parse_args()
     if args:
         parser.print_help()
         sys.exit(1)
+    if opts.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     ask_for_entries(database_path=realpath(opts.database), force=opts.force)
