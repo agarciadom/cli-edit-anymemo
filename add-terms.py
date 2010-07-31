@@ -2,7 +2,7 @@
 """Adds a set of questions and answers to an AnyMemo SQLite
 database. Entries are read from standard input."""
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 # Default values
 DEFAULT_DATABASE = "germanpod.xml.db"
@@ -11,6 +11,22 @@ import sqlite3
 import logging
 import readline
 
+class CategoryCompleter(object):
+    """Category completer."""
+
+    def __init__(self, db_cursor):
+        db_cursor.execute('SELECT DISTINCT category FROM dict_tbl')
+        self.categories = [r[0] for r in db_cursor]
+        logging.debug('Categories for autocomplete: '
+                      + ', '.join(self.categories))
+
+    def complete(self, text, state):
+        options = [c for c in self.categories if c.startswith(text)]
+        if state < len(options):
+            return options[state]
+        else:
+            return None
+
 
 def confirm(question):
     answer = input(question + " [y/n] ").strip().lower()
@@ -18,7 +34,6 @@ def confirm(question):
         return True
     else:
         return False
-
 
 def ask_for_question(db_cursor, force):
     question = input('Question: ').strip()
@@ -58,11 +73,13 @@ def ask_for_answer(db_cursor, force):
         return answer
 
 
-def ask_for_category(db_cursor, force, last_category):
-    category = input("Category"
-                     + (" (default: {})" if last_category else "")
-                       .format(last_category)
-                     + ": ").strip()
+def ask_for_category(db_cursor, completer, force, last_category):
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer(completer)
+    category = input("Category{}: "
+                     .format(" (default is )" + last_category
+                             if last_category else "")).strip()
+    readline.set_completer(None)
     if not category:
         category = last_category
 
@@ -86,11 +103,12 @@ def ask_for_entries(database_path, force):
     conn = sqlite3.connect(database_path)
     db_c = conn.cursor()
     last_category = None
+    cat_completer = CategoryCompleter(db_c)
 
     logging.info("Opened database '{}'".format(database_path))
     print("""
 Press Ctrl+D at any time to exit saving changes, or Ctrl+C to exit
-without saving changes.
+without saving changes. Autocomplete categories with TAB.
 """)
 
     try:
@@ -107,7 +125,7 @@ without saving changes.
                 continue
             logging.debug("Got answer '{}'".format(answer))
 
-            category = ask_for_category(db_c, force, last_category)
+            category = ask_for_category(db_c, cat_completer.complete, force, last_category)
             if not category:
                 logging.debug("No category: looping back to start")
                 continue
