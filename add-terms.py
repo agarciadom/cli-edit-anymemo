@@ -32,7 +32,7 @@ saving any changes."""
 # THE SOFTWARE.
 
 
-VERSION = "1.1"
+VERSION = "1.1.1"
 
 # Default values
 DEFAULT_DATABASE = "mydatabase.xml.db"
@@ -57,6 +57,10 @@ class CategoryCompleter(object):
             return options[state]
         else:
             return None
+
+    def add_category(self, new_category):
+        if new_category and new_category not in self.categories:
+            self.categories.append(new_category)
 
 
 def confirm(question):
@@ -107,7 +111,7 @@ def ask_for_answer(db_cursor, force):
 
 def ask_for_category(db_cursor, completer, force, last_category):
     readline.parse_and_bind("tab: complete")
-    readline.set_completer(completer)
+    readline.set_completer(completer.complete)
     category = input("Category{}: "
                      .format(" (default is " + last_category + ")"
                              if last_category else "")).strip()
@@ -123,6 +127,7 @@ def ask_for_category(db_cursor, completer, force, last_category):
     if count == 0 and not force:
         if confirm("Category '{}' does not seem to exist. Proceed?"
                    .format(category)):
+            completer.add_category(category)
             return category
     elif category:
         return category
@@ -157,7 +162,7 @@ without saving changes. Autocomplete categories with TAB.
                 continue
             logging.debug("Got answer '{}'".format(answer))
 
-            category = ask_for_category(db_c, cat_completer.complete,
+            category = ask_for_category(db_c, cat_completer,
                                         force, last_category)
             if not category:
                 logging.debug("No category: looping back to start")
