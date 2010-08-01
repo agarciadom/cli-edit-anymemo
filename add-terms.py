@@ -145,7 +145,9 @@ def ask_for_entries(database_path, force):
     logging.info("Opened database '{}'".format(database_path))
     print("""
 Press Ctrl+D at any time to exit saving changes, or Ctrl+C to exit
-without saving changes. Autocomplete categories with TAB.
+without saving changes. Autocomplete categories with TAB. If you want
+to cancel adding some entry without exiting the program, enter an
+empty question or an empty answer.
 """)
 
     try:
