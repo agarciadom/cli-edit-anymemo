@@ -37,7 +37,7 @@ import readline
 
 ##### CONSTANTS ###############################################################
 
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 # Default values
 DEFAULT_DATABASE = "mydatabase.xml.db"
