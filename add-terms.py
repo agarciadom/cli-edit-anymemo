@@ -35,7 +35,7 @@ import sqlite3
 import logging
 import readline
 
-##### CONSTANTS ################################################################
+##### CONSTANTS ###############################################################
 
 VERSION = "1.1.1"
 
@@ -46,7 +46,7 @@ DEFAULT_DATABASE = "mydatabase.xml.db"
 # answer exists
 EXISTING_ASK, EXISTING_SKIP, EXISTING_ADD = range(3)
 
-################################################################################
+###############################################################################
 
 
 class CategoryCompleter(object):
@@ -96,7 +96,7 @@ def ask_for_question(db_cursor, when_existing):
     rows = db_cursor.fetchall()
     logging.debug("Answers for '{0}': {1:d}".format(question, len(rows)))
     return check_existing(
-        msg_generator= lambda rows, question:
+        msg_generator=lambda rows, question:
             ("Question '{question}' seems to exist already, with "
              + "answer '{answer}'. Proceed?").format(question=question,
                                                      answer=rows[0][0]),
@@ -114,16 +114,16 @@ def ask_for_answer(db_cursor, when_existing):
     rows = db_cursor.fetchall()
     logging.debug("Questions for '{0}': {1:d}".format(answer, len(rows)))
     return check_existing(
-        msg_generator = lambda rows, question:
+        msg_generator=lambda rows, question:
             ("Answer '{answer}' seems to exist already, with "
              + "question '{question}'. Proceed?").format(question=rows[0][0],
                                                          answer=answer),
-        exists = rows,
-        return_value = answer,
-        when_existing = when_existing)
+        exists=rows,
+        return_value=answer,
+        when_existing=when_existing)
 
 
-def ask_for_category(db_cursor, completer, force, last_category):
+def ask_for_category(db_cursor, completer, when_existing, last_category):
     readline.parse_and_bind("tab: complete")
     readline.set_completer(completer.complete)
     category = input("Category{}: "
@@ -138,11 +138,11 @@ def ask_for_category(db_cursor, completer, force, last_category):
         (category,))
     count = int(db_cursor.fetchone()[0])
 
-    if check_existing(msg_generator = lambda pred, category :
+    if check_existing(msg_generator=lambda pred, category:
         "Category '{}' does not seem to exist. Proceed?".format(category),
-        exists = count == 0,
-        return_value = category,
-        when_existing = when_existing):
+        exists=count == 0,
+        return_value=category,
+        when_existing=when_existing):
 
         completer.add_category(category)
         return category
