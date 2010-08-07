@@ -31,15 +31,22 @@ saving any changes."""
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import sqlite3
+import logging
+import readline
+
+##### CONSTANTS ################################################################
 
 VERSION = "1.1.1"
 
 # Default values
 DEFAULT_DATABASE = "mydatabase.xml.db"
 
-import sqlite3
-import logging
-import readline
+# Enum for what to do when an entry with the same question and/or
+# answer exists
+EXISTING_ASK, EXISTING_SKIP, EXISTING_ADD = range(3)
+
+################################################################################
 
 
 class CategoryCompleter(object):
@@ -71,7 +78,16 @@ def confirm(question):
         return False
 
 
-def ask_for_question(db_cursor, force):
+def check_existing(msg_generator, exists, return_value, when_existing):
+    if exists and when_existing != EXISTING_ADD:
+        if (when_existing == EXISTING_ASK
+            and confirm(msg_generator(exists, return_value))):
+            return return_value
+    elif return_value:
+        return return_value
+
+
+def ask_for_question(db_cursor, when_existing):
     question = input('Question: ').strip()
     db_cursor.execute(
         'SELECT answer FROM dict_tbl WHERE trim(question)=?',
@@ -79,18 +95,17 @@ def ask_for_question(db_cursor, force):
 
     rows = db_cursor.fetchall()
     logging.debug("Answers for '{0}': {1:d}".format(question, len(rows)))
-    if rows and not force:
-        ex_answer = rows[0][0]
-        if confirm(
+    return check_existing(
+        msg_generator= lambda rows, question:
             ("Question '{question}' seems to exist already, with "
              + "answer '{answer}'. Proceed?").format(question=question,
-                                                     answer=ex_answer)):
-            return question
-    elif question:
-        return question
+                                                     answer=rows[0][0]),
+        exists=rows,
+        return_value=question,
+        when_existing=when_existing)
 
 
-def ask_for_answer(db_cursor, force):
+def ask_for_answer(db_cursor, when_existing):
     answer = input('Answer: ').strip()
     db_cursor.execute(
         'SELECT question FROM dict_tbl WHERE trim(answer)=?',
@@ -98,15 +113,14 @@ def ask_for_answer(db_cursor, force):
 
     rows = db_cursor.fetchall()
     logging.debug("Questions for '{0}': {1:d}".format(answer, len(rows)))
-    if rows and not force:
-        ex_question = rows[0][0]
-        if confirm(
+    return check_existing(
+        msg_generator = lambda rows, question:
             ("Answer '{answer}' seems to exist already, with "
-             + "question '{question}'. Proceed?").format(question=ex_question,
-                                                         answer=answer)):
-            return answer
-    elif answer:
-        return answer
+             + "question '{question}'. Proceed?").format(question=rows[0][0],
+                                                         answer=answer),
+        exists = rows,
+        return_value = answer,
+        when_existing = when_existing)
 
 
 def ask_for_category(db_cursor, completer, force, last_category):
@@ -124,16 +138,17 @@ def ask_for_category(db_cursor, completer, force, last_category):
         (category,))
     count = int(db_cursor.fetchone()[0])
 
-    if count == 0 and not force:
-        if confirm("Category '{}' does not seem to exist. Proceed?"
-                   .format(category)):
-            completer.add_category(category)
-            return category
-    elif category:
+    if check_existing(msg_generator = lambda pred, category :
+        "Category '{}' does not seem to exist. Proceed?".format(category),
+        exists = count == 0,
+        return_value = category,
+        when_existing = when_existing):
+
+        completer.add_category(category)
         return category
 
 
-def ask_for_entries(database_path, force):
+def ask_for_entries(database_path, when_existing):
     """Asks for a series of questions/answers from the standard input,
     and adds them to the SQLite DB in the specified absolute
     path. Warns when the question or answer already exists."""
@@ -152,20 +167,20 @@ empty question or an empty answer.
 
     try:
         while True:
-            question = ask_for_question(db_c, force)
+            question = ask_for_question(db_c, when_existing)
             if not question:
                 logging.debug("No question: looping back to start")
                 continue
             logging.debug("Got question '{}'".format(question))
 
-            answer = ask_for_answer(db_c, force)
+            answer = ask_for_answer(db_c, when_existing)
             if not answer:
                 logging.debug("No answer: looping back to start")
                 continue
             logging.debug("Got answer '{}'".format(answer))
 
             category = ask_for_category(db_c, cat_completer,
-                                        force, last_category)
+                                        when_existing, last_category)
             if not category:
                 logging.debug("No category: looping back to start")
                 continue
@@ -207,10 +222,17 @@ if __name__ == "__main__":
         help="Set the SQLite DB file to be modified ({} by default)"
              .format(DEFAULT_DATABASE))
     parser.add_option(
-        "--force", "-f", dest="force",
-        action="store_true", default=False,
+        "--force", "-f", dest="when_existing",
+        action="store_const", const=EXISTING_ADD, default=EXISTING_ASK,
         help="Add new entries without confirmation even if the questions "
-             + "and/or answers exist")
+             + "and/or answers exist, or the category does not exist yet "
+             + "(overrides a previous -s)")
+    parser.add_option(
+        "--skip-existing", "-s", dest="when_existing",
+        action="store_const", const=EXISTING_SKIP, default=EXISTING_ASK,
+        help="Skip entries without confirmation if the questions "
+             + "and/or answers exist, or the category does not exist yet "
+             + "(overrides a previous -f)")
     parser.add_option(
         "--verbose", "-v", dest="verbose",
         action="store_true", default=False,
@@ -225,4 +247,5 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO)
 
-    ask_for_entries(database_path=realpath(opts.database), force=opts.force)
+    ask_for_entries(database_path=realpath(opts.database),
+                    when_existing=opts.when_existing)
