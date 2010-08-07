@@ -210,9 +210,10 @@ empty question or an empty answer.
         logging.info("Exiting...")
         conn.close()
 
-if __name__ == "__main__":
+
+def main(argv):
+    """Main function for the whole application."""
     from optparse import OptionParser
-    import sys
     from os.path import realpath
 
     parser = OptionParser(description=__doc__, version=VERSION)
@@ -238,7 +239,7 @@ if __name__ == "__main__":
         action="store_true", default=False,
         help="Print debugging information")
 
-    opts, args = parser.parse_args()
+    opts, args = parser.parse_args(argv)
     if args:
         parser.print_help()
         sys.exit(1)
@@ -249,3 +250,8 @@ if __name__ == "__main__":
 
     ask_for_entries(database_path=realpath(opts.database),
                     when_existing=opts.when_existing)
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv[1:])
